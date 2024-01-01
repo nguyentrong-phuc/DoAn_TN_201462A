@@ -42,7 +42,7 @@ sit = 10
 stand = 11
 move_forward = 12
 move_right = 13
-move_left = 14 
+move_left = 14 # repairing...
 move_around_CCW = 15 #nguoc chieu KDH
 move_around_CW = 16 #cung chieu KDH
 roll = 17
@@ -194,49 +194,36 @@ def Pose(mode):
         for t in np.arange(0,2.1,0.1):
             if(t<=1):
                 x = 0
-                y = l1 +30*(t)-15
+                y = l1 + 30*(t)-15
                 z = -120
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-
-                x = 0
-                y = -l1+30*(t)-15 
-                z = -120
+                y = -l1 + 30*(t)-15 
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
 
                 alpha= np.pi*(t)
                 x = 0
                 y = -l1 + 15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                z = -120 + 15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
-
-                alpha= np.pi*(t)
-                x = 0
-                y = l1+15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                y = l1 + 15*np.cos(alpha)
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
+                
                 time.sleep(0.01)
 
             else:
                 x = 0
-                y = l1 +30*(t-1)-15
+                y = l1 + 30*(t-1)-15
                 z = -120
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
-
-                x = 0
-                y = -l1+30*(t-1)-15 
-                z = -120
+                y = -l1 + 30*(t-1)-15 
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
 
                 alpha= np.pi*(2-t)
                 x = 0
-                y = -l1 -15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                y = -l1 - 15*np.cos(alpha)
+                z = -120 + 15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
-
-                alpha= np.pi*(2-t)
-                x = 0
-                y = l1-15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                y = l1 - 15*np.cos(alpha)
                 LEFT_Inverse_Kinematics(Front,x,y,z)
 
                 time.sleep(0.01)
@@ -245,13 +232,10 @@ def Pose(mode):
         for t in np.arange(0,2.1,0.1):
             if(t<=1):
                 x = 0
-                y = l1 -30*(t)+15
+                y = l1 - 30*(t)+15
                 z = -120
                 LEFT_Inverse_Kinematics(front_left,x,y,z)
-        
-                x = 0
-                y = -l1-30*(t)+15 
-                z = -120
+                y = -l1 - 30*(t)+15 
                 RIGHT_Inverse_Kinematics(rear_right,x,y,z)
 
                 alpha= np.pi*(t)
@@ -259,47 +243,37 @@ def Pose(mode):
                 y = -l1 - 15*np.cos(alpha)
                 z = -120+15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(front_right,x,y,z)
-            
-                alpha= np.pi*(t)
-                x = 0
-                y = l1-15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                y = l1 - 15*np.cos(alpha)
                 LEFT_Inverse_Kinematics(rear_left,x,y,z)
+                
+                time.sleep(0.01)
                 
             else:
                 x = 0
-                y = l1 -30*(t-1)+15
+                y = l1 - 30*(t-1)+15
                 z = -120
                 LEFT_Inverse_Kinematics(rear_left,x,y,z)
-        
-                x = 0
-                y = -l1-30*(t-1)+15 
-                z = -120
+                y = -l1 - 30*(t-1)+15 
                 RIGHT_Inverse_Kinematics(front_right,x,y,z)
 
                 alpha= np.pi*(2-t)
                 x = 0
                 y = -l1 + 15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                z = -120 + 15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(rear_right,x,y,z)
-            
-                alpha= np.pi*(2-t)
-                x = 0
-                y = l1+15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
+                y = l1 + 15*np.cos(alpha)
                 LEFT_Inverse_Kinematics(front_left,x,y,z)
+                
+                time.sleep(0.01)
                 
     elif(mode == move_around_CW):
         for t in np.arange(0,2.1,0.1):
             if(t<=1):
                 x = 0
-                y = l1 +30*(t)-15
+                y = l1 + 30*(t)-15
                 z = -120
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-
-                x = 0
                 y = -l1-30*(t)+15 
-                z = -120
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
 
                 alpha= np.pi*(t)
@@ -307,12 +281,9 @@ def Pose(mode):
                 y = -l1 + 15*np.cos(alpha)
                 z = -120+15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
-            
-                alpha= np.pi*(t)
-                x = 0
                 y = l1-15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
+                
                 time.sleep(0.01)
 
             else:
@@ -320,10 +291,7 @@ def Pose(mode):
                 y = l1 -30*(t-1)+15
                 z = -120
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
-        
-                x = 0
                 y = -l1+30*(t-1)-15 
-                z = -120
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
 
                 alpha= np.pi*(2-t)
@@ -331,11 +299,7 @@ def Pose(mode):
                 y = -l1 +15*np.cos(alpha)
                 z = -120+15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
-
-                alpha= np.pi*(2-t)
-                x = 0
                 y = l1-15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Front,x,y,z)
 
                 time.sleep(0.01)
@@ -347,10 +311,7 @@ def Pose(mode):
                 y = l1 +30*(t)-15
                 z = -120
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
-
-                x = 0
                 y = -l1-30*(t)+15 
-                z = -120
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
 
                 alpha= np.pi*(t)
@@ -358,11 +319,7 @@ def Pose(mode):
                 y = -l1 + 15*np.cos(alpha)
                 z = -120+15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
-
-                alpha= np.pi*(t)
-                x = 0
                 y = l1-15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Front,x,y,z)
                 
                 time.sleep(0.01)
@@ -372,10 +329,7 @@ def Pose(mode):
                 y = l1 -30*(t-1)+15
                 z = -120
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-        
-                x = 0
                 y = -l1+30*(t-1)-15 
-                z = -120
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
 
                 alpha= np.pi*(2-t)
@@ -383,80 +337,66 @@ def Pose(mode):
                 y = -l1 + 15*np.cos(alpha)
                 z = -120+15*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
-
-                alpha= np.pi*(2-t)
-                x = 0
                 y = l1-15*np.cos(alpha)
-                z = -120+15*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
 
                 time.sleep(0.01)
                 
-    elif(mode == roll):
-        input=int(); # angle
-        for:
-            move;
+    # elif(mode == roll):
+    #     input=int(); # angle
+    #     for:
+    #         move;
             
             
-    elif(mode == pitch):
-        input=int(); # angle
-        for:
-            move;
+    # elif(mode == pitch):
+    #     input=int(); # angle
+    #     for:
+    #         move;
             
-    elif(mode == yaw):
-        input=int(); # angle
-        for:
-            move;
-        
+    # elif(mode == yaw):
+    #     input=int(); # angle
+    #     for:
+    #         move;
         
     elif(mode == move_forward):
+        RH = -130 # mm -> Robot height
+        SL = 40 # mm -> Swing length
+        SH = 60 # mm -> Swing height
         for t in np.arange(0,2.1,0.1):
             if(t<=1):
-                x = -40*t+20
+                x = -SL*t+(SL/2)
                 y = l1 
-                z = -120
+                z = RH
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
-
-                x = -40*t+20
-                y = -l1 
-                z = -120
-                RIGHT_Inverse_Kinematics(Front,x,y,z)
+                y = -l1
+                RIGHT_Inverse_Kinematics(Front,x,y,z)        
 
                 alpha= np.pi*(1-t)
-                x = 20*np.cos(alpha)
-                y = -l1 
-                z = -120+20*np.sin(alpha)
-                RIGHT_Inverse_Kinematics(Rear,x,y,z)
-
-                alpha= np.pi*(1-t)
-                x = 20*np.cos(alpha)
+                x = (SL/2)*np.cos(alpha)
                 y = l1 
-                z = -120+20*np.sin(alpha)
+                z = RH+SH*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Front,x,y,z)
+                y = -l1 
+                RIGHT_Inverse_Kinematics(Rear,x,y,z)
+                
                 time.sleep(0.01)
 
             else:
-                x = -40*(t-1)+20
-                y = l1 
-                z = -120
-                LEFT_Inverse_Kinematics(Front,x,y,z)
-
-                x = -40*(t-1)+20
-                y = -l1 
-                z = -120
-                RIGHT_Inverse_Kinematics(Rear,x,y,z)
-
                 alpha= np.pi*(2-t)
-                x = 20*np.cos(alpha)
-                y = -l1 
-                z = -120+20*np.sin(alpha)
-                RIGHT_Inverse_Kinematics(Front,x,y,z)
-
-                alpha= np.pi*(2-t)
-                x = 20*np.cos(alpha)
+                x = (SL/2)*np.cos(alpha)
                 y = l1 
-                z = -120+20*np.sin(alpha)
+                z = RH+SH*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
+                y = -l1
+                RIGHT_Inverse_Kinematics(Front,x,y,z)
+                
+                x = -SL*(t-1)+(SL/2)
+                y = l1 
+                z = RH
+                LEFT_Inverse_Kinematics(Front,x,y,z)
+                y = -l1 
+                RIGHT_Inverse_Kinematics(Rear,x,y,z)
+                
                 time.sleep(0.01)
                 
             
@@ -526,10 +466,15 @@ def Pose(mode):
                 setLegAngles(rear_right,t1,t2,t3)
                 
             time.sleep(0.05)
+            
+        
+    
 
 ### Main code ###
+
 # Set frequency to 60hz, good for servos.
 pwm.set_pwm_freq(60)
+
 # Move servo on channel O between extremes.
 initial_position()
 
