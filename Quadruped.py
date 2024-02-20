@@ -119,7 +119,7 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     Check_work_space(x,y,z)
     # Theta1
     alpha = m.acos(y/np.sqrt(y**2 + z**2))
-    t1 = -m.acos(l1/np.sqrt(z**2 + y**2)) - alpha
+    t1 = -(m.acos(l1/np.sqrt(z**2 + y**2)) - alphaalpha)
     c1 = np.cos(t1)
     s1 = np.sin(t1)
     # Theta3
