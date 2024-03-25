@@ -26,8 +26,11 @@ l1=46.4 #mm
 l2=100 #mm
 l3=100 #mm
 RH = -120 # mm -> Robot height
-SL = 40 # mm -> Swing length
+SL = 50 # mm -> Swing length
 SH = 50 # mm -> Swing height
+
+A_x = -35 #mm -> add x position
+A_z = -20 #mm -> add z position
 
 #Define side
 Front = 30
@@ -52,10 +55,10 @@ pitch = 18
 yaw = 19
 
 # Offset matrix [t1,t2,t3] <=> [0,45,90]
-FL = arr.array('i', [95, 60, 0]) 
-FR = arr.array('i', [90, 85, 165]) 
-RL = arr.array('i', [95, 60, 10]) 
-RR = arr.array('i', [90, 85, 165]) 
+FL = arr.array('i', [90, 67, 12]) 
+FR = arr.array('i', [90, 83, 167]) 
+RL = arr.array('i', [98, 70, 13]) 
+RR = arr.array('i', [90, 84, 170]) 
 
 # angle to pulse
 def angle2pulse(angle):
@@ -176,13 +179,21 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
     elif(leg == Front):
         setLegAngles(front_right,t1,t2,t3)
     
+def Calip():
+    setLegAngles(front_left, 0, 45, 90)
+    setLegAngles(front_right, 0, -45, -90)
+    setLegAngles(rear_left, 0, 45, 90)
+    setLegAngles(rear_right, 0, -45, -90)
+    exit()
+    
 def initial_position():
     LEFT_Inverse_Kinematics(Front,0,l1,RH)
     RIGHT_Inverse_Kinematics(Front,0,-l1,RH)
-    LEFT_Inverse_Kinematics(Rear,-20,l1,RH-15)  #
-    RIGHT_Inverse_Kinematics(Rear,-20,-l1,RH-15) #
-    time.sleep(1.5)
-    #exit()
+    # LEFT_Inverse_Kinematics(Rear, 0,l1,RH)  
+    # RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH) 
+    LEFT_Inverse_Kinematics(Rear, A_x,l1,RH+A_z)  
+    RIGHT_Inverse_Kinematics(Rear, A_x,-l1,RH+A_z) 
+    time.sleep(2)
 
 # Mode of pose
 def Pose(mode):
@@ -361,8 +372,8 @@ def Pose(mode):
                 y = -l1 
                 z = RH
                 RIGHT_Inverse_Kinematics(Front,x,y,z) 
-                x = x - 20
-                z = z -15
+                x = x + A_x
+                z = z + A_z
                 y = l1
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
 
@@ -371,8 +382,8 @@ def Pose(mode):
                 y = l1 
                 z = RH+SH*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-                x = x - 20
-                z = z -15
+                x = x + A_x
+                z = z + A_z
                 y = -l1 
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
 
@@ -382,8 +393,8 @@ def Pose(mode):
                 y = -l1 
                 z = RH+SH*np.sin(alpha)
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
-                x = x - 20
-                z = z -15
+                x = x + A_x
+                z = z + A_z
                 y = l1
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
                 
@@ -391,8 +402,8 @@ def Pose(mode):
                 y = l1 
                 z = RH
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-                x = x - 20
-                z = z - 15
+                x = x + A_x
+                z = z + A_z
                 y = -l1 
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
                 
@@ -430,6 +441,7 @@ def Pose(mode):
                 t3=-t3
                 setLegAngles(front_right,t1,t2,t3)
                 setLegAngles(rear_right,t1,t2,t3)
+                time.sleep(0.02)
                 
             time.sleep(0.01)
                 
@@ -445,6 +457,7 @@ def Pose(mode):
                 t3=-t3
                 setLegAngles(front_right,t1,t2,t3)
                 setLegAngles(rear_right,t1,t2,t3)
+                time.sleep(0.02)
                 
             elif(t <= 5):
                 t2 = (50 + 20 * (t - 4))
@@ -475,6 +488,7 @@ def Pose(mode):
 pwm.set_pwm_freq(60)
 
 # Move servo on channel O between extremes.
+# Calip()
 initial_position()
 
 while True:
@@ -485,13 +499,13 @@ while True:
     # time.sleep(2)
     
     ### move forward ###
-    #Pose(move_forward)    
+    Pose(move_forward)    
     
-    SL = 20
+    #SL = 20
     #Pose(move_right)
     #Pose(move_left)
     #Pose(move_around_CW)
-    Pose(move_around_CCW)
+    #Pose(move_around_CCW)
     
 
 
