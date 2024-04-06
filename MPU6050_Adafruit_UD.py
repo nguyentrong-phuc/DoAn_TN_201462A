@@ -48,9 +48,9 @@ class MPU6050(object):
         return data
     
     def get_Gyro(self):
-        gyro_x = mpu.read_Sensor(GYRO_XOUT_H)
-        gyro_y = mpu.read_Sensor(GYRO_YOUT_H)
-        gyro_z = mpu.read_Sensor(GYRO_ZOUT_H)
+        gyro_x = self.read_Sensor(GYRO_XOUT_H)
+        gyro_y = self.read_Sensor(GYRO_YOUT_H)
+        gyro_z = self.read_Sensor(GYRO_ZOUT_H)
         Gx = gyro_x/131.0
         Gy = gyro_y/131.0
         Gz = gyro_z/131.0
@@ -59,7 +59,7 @@ class MPU6050(object):
         return Gx, Gy, Gz    
     
     def get_Temp(self):
-        temp_out = mpu.read_Sensor(TEMP_OUT)
+        temp_out = self.read_Sensor(TEMP_OUT)
         Temp = (temp_out / 340.0) + 36.53
         print("%.2f^C"%Temp)
         return Temp
