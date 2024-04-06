@@ -25,12 +25,14 @@ servo_max = 600  # Max pulse length out of 4096
 l1=46.4 #mm
 l2=100 #mm
 l3=100 #mm
-RH = -120 # mm -> Robot height
+
+RH = -130 # mm -> Robot height
 SL = 50 # mm -> Swing length
 SH = 50 # mm -> Swing height
 
-A_x = -35 #mm -> add x position
-A_z = -20 #mm -> add z position
+A_x = -20 #mm -> add x position(all legs)(dieu chinh trong tam)
+A_rx = -15 #mm -> add x position(rear legs)
+A_z = -10 #mm -> add z position(rear legs)
 
 #Define side
 Front = 30
@@ -55,7 +57,7 @@ pitch = 18
 yaw = 19
 
 # Offset matrix [t1,t2,t3] <=> [0,45,90]
-FL = arr.array('i', [90, 67, 12]) 
+FL = arr.array('i', [90, 31, 12]) 
 FR = arr.array('i', [90, 83, 167]) 
 RL = arr.array('i', [98, 70, 13]) 
 RR = arr.array('i', [90, 84, 170]) 
@@ -189,11 +191,12 @@ def Calip():
 def initial_position():
     LEFT_Inverse_Kinematics(Front,0,l1,RH)
     RIGHT_Inverse_Kinematics(Front,0,-l1,RH)
-    # LEFT_Inverse_Kinematics(Rear, 0,l1,RH)  
-    # RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH) 
-    LEFT_Inverse_Kinematics(Rear, A_x,l1,RH+A_z)  
-    RIGHT_Inverse_Kinematics(Rear, A_x,-l1,RH+A_z) 
+    LEFT_Inverse_Kinematics(Rear, 0,l1,RH)  
+    RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH) 
+    # LEFT_Inverse_Kinematics(Rear, A_x,l1,RH+A_z)  #
+    # RIGHT_Inverse_Kinematics(Rear, A_x,-l1,RH+A_z) #
     time.sleep(2)
+    #exit()
 
 # Mode of pose
 def Pose(mode):
@@ -368,42 +371,42 @@ def Pose(mode):
     elif(mode == move_forward):
         for t in np.arange(0,2.005,0.1):
             if(t<=1.005):
-                x = -SL*t+(SL/2)
+                x = -SL*t+(SL/2) + A_x
                 y = -l1 
-                z = RH
+                z = RH 
                 RIGHT_Inverse_Kinematics(Front,x,y,z) 
-                x = x + A_x
-                z = z + A_z
+                x += A_rx
                 y = l1
+                z += A_z
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
 
                 alpha= np.pi*(1-t)
-                x = (SL/2)*np.cos(alpha)
+                x = (SL/2)*np.cos(alpha) + A_x
                 y = l1 
                 z = RH+SH*np.sin(alpha)
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-                x = x + A_x
-                z = z + A_z
+                x += A_rx
                 y = -l1 
+                z += A_z
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
 
             else:
                 alpha= np.pi*(2-t)
-                x = (SL/2)*np.cos(alpha)
+                x = (SL/2)*np.cos(alpha) + A_x
                 y = -l1 
-                z = RH+SH*np.sin(alpha)
+                z = RH+SH*np.sin(alpha) 
                 RIGHT_Inverse_Kinematics(Front,x,y,z)
-                x = x + A_x
-                z = z + A_z
+                x += A_rx
                 y = l1
+                z += A_z
                 LEFT_Inverse_Kinematics(Rear,x,y,z)
                 
-                x = -SL*(t-1)+(SL/2)
+                x = -SL*(t-1)+(SL/2) + A_x
                 y = l1 
                 z = RH
                 LEFT_Inverse_Kinematics(Front,x,y,z)
-                x = x + A_x
-                z = z + A_z
+                x += A_rx
+                z += A_z
                 y = -l1 
                 RIGHT_Inverse_Kinematics(Rear,x,y,z)
                 
