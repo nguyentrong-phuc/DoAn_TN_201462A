@@ -154,20 +154,17 @@ class MPU6050(object): # mpu = MPU6050()
         return data
 
     def get_Gyro(self):
-        gyro_x = mpu.read_Sensor(GYRO_XOUT_H)
-        gyro_y = mpu.read_Sensor(GYRO_YOUT_H)
-        gyro_z = mpu.read_Sensor(GYRO_ZOUT_H)
+        gyro_x = self.read_Sensor(GYRO_XOUT_H)
+        gyro_y = self.read_Sensor(GYRO_YOUT_H)
+        gyro_z = self.read_Sensor(GYRO_ZOUT_H)
         Gx = gyro_x/131.0
         Gy = gyro_y/131.0
         Gz = gyro_z/131.0
-        # return gyro_x, gyro_y, gyro_z
-        # print ("Gx=%.2f" %Gx, "  Gy=%.2f" %Gy, "  Gz=%.2f" %Gz) 
         return Gx, Gy, Gz    
     
     def get_Temp(self):
-        temp_out = mpu.read_Sensor(TEMP_OUT)
+        temp_out = self.read_Sensor(TEMP_OUT)
         Temp = (temp_out / 340.0) + 36.53
-        # print("%.2f^C"%Temp)
         return Temp
     
     def get_Acc(self):
@@ -177,8 +174,6 @@ class MPU6050(object): # mpu = MPU6050()
         Ax = acc_x/4096.0
         Ay = acc_y/4096.0
         Az = acc_z/4096.0
-        #return acc_x, acc_y, acc_z
-        # print ("Ax=%.2f g" %Ax, "  Ay=%.2f g" %Ay, "  Az=%.2f g" %Az) 
         return Ax, Ay, Az 
     
 # Ex:   a,b,c = mpu.get_Acc() to get 3 values
@@ -186,6 +181,4 @@ class MPU6050(object): # mpu = MPU6050()
         Ax, Ay, Az = self.get_Acc()
         pitch = -math.atan2(Ax, math.sqrt(pow(Ay,2)+pow(Az,2)))*180/(math.pi)
         roll = math.atan2(Ay, math.sqrt(pow(Ax,2)+pow(Az,2)))*180/(math.pi)
-        print("Goc truc X: %.1f" %roll  ,  "Goc truc Y: %.1f" %pitch)
         return roll, pitch
-        #return Ax, Ay, Az
