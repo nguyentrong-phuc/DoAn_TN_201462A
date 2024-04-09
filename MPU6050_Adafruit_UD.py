@@ -82,8 +82,9 @@ class MPU6050(object):
         pitch = -math.atan2(Ax, math.sqrt(pow(Ay,2)+pow(Az,2)))*180/(math.pi)
         roll = math.atan2(Ay, math.sqrt(pow(Ax,2)+pow(Az,2)))*180/(math.pi)
         print("Goc truc X: %.1f" %roll  ,  "Goc truc Y: %.1f" %pitch)
-        return roll, pitch
         #return Ax, Ay, Az
+        return roll, pitch
+        
 
 
 mpu = MPU6050()
