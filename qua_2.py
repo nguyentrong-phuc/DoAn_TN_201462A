@@ -1,8 +1,8 @@
 
 from __future__ import division
 import time
-from math import sqrt, atan2, cos, sin, pi, asin, acos, fabs
-import array as arr 
+from numpy import sqrt, atan2, cos, sin, pi, asin, acos, fabs, array
+
 # Import the PCA9685 module.
 
 import Adafruit_PCA9685
@@ -56,10 +56,10 @@ pitch = 18
 yaw = 19
 
 # Offset matrix [t1,t2,t3] <=> [0,45,90]
-FL = arr.array('i', [90, 31, 12]) 
-FR = arr.array('i', [90, 83, 167]) 
-RL = arr.array('i', [98, 70, 13]) 
-RR = arr.array('i', [90, 84, 170]) 
+FL = array([90, 31, 12]) 
+FR = array([90, 83, 167]) 
+RL = array([98, 70, 13]) 
+RR = array([90, 84, 170]) 
 
 # angle to pulse
 def angle2pulse(angle):
