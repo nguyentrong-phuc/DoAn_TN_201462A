@@ -1,10 +1,10 @@
-
 from __future__ import division
 import time
 import math as m
 import numpy as np
 import array as arr 
 import timeit
+import threading
 # Import the PCA9685 module.
 
 import Adafruit_PCA9685
@@ -22,6 +22,18 @@ mpu = Adafruit_PCA9685.MPU6050()
 # Configure min and max servo pulse lengths
 servo_min = 100  # Min pulse length out of 4096
 servo_max = 600  # Max pulse length out of 4096
+
+Roll = 0
+Pitch = 0
+# preTimeGet = 0
+def getRollPitch_MPU():
+    global Roll, Pitch # ,preTimeGet
+    Roll, Pitch = mpu.get_RP_Angle()
+    # print("Goc truc X: %.1f" %Roll  ,  "Goc truc Y: %.1f" %Pitch)
+    threading.Timer(0.5,getRollPitch_MPU).start()
+    # timeGet = timeit.default_timer()
+    # print(timeGet - preTimeGet, " (seconds)")
+    # preTimeGet = timeGet
 
 l1=46.4 #mm
 l2=100 #mm
@@ -59,24 +71,26 @@ def angle2pulse(angle):
 def setLegAngles(LegAdress, Theta1, Theta2, Theta3):
     #offset
     if(LegAdress == front_left):
-        pwm.set_pwm(LegAdress,  0,angle2pulse(180 - (Theta1 + FL[0])))
-        pwm.set_pwm(LegAdress+1,0,angle2pulse(Theta2 + FL[1]))
-        pwm.set_pwm(LegAdress+2,0,angle2pulse(Theta3 + FL[2]))
+        Theta1 = 180 - (Theta1 + FL[0])
+        Theta2 = Theta2 + FL[1]
+        Theta3 = Theta3 + FL[2]
     elif(LegAdress == front_right):
-        pwm.set_pwm(LegAdress,  0,angle2pulse(180 - (Theta1 + FR[0])))
-        pwm.set_pwm(LegAdress+1,0,angle2pulse(Theta2 + FR[1]))
-        pwm.set_pwm(LegAdress+2,0,angle2pulse(Theta3 + FR[2]))
+        Theta1 = 180 - (Theta1 + FR[0])
+        Theta2 = Theta2 + FR[1]
+        Theta3 = Theta3 + FR[2]
     elif(LegAdress == rear_left):
-        pwm.set_pwm(LegAdress,  0,angle2pulse(Theta1 + RL[0]))
-        pwm.set_pwm(LegAdress+1,0,angle2pulse(Theta2 + RL[1]))
-        pwm.set_pwm(LegAdress+2,0,angle2pulse(Theta3 + RL[2]))
+        Theta1 = Theta1 + RL[0]
+        Theta2 = Theta2 + RL[1]
+        Theta3 = Theta3 + RL[2]
     elif(LegAdress == rear_right):
-        pwm.set_pwm(LegAdress,  0,angle2pulse(Theta1 + RR[0]))
-        pwm.set_pwm(LegAdress+1,0,angle2pulse(Theta2 + RR[1]))
-        pwm.set_pwm(LegAdress+2,0,angle2pulse(Theta3 + RR[2]))
+        Theta1 = Theta1 + RR[0]
+        Theta2 = Theta2 + RR[1]
+        Theta3 = Theta3 + RR[2]
     else: 
         print("Wrong Leg Adress")
         exit()
+    # print('Theta1= ',Theta1,'Theta2= ',Theta2,'Theta3= ',Theta3)
+    pwm.set_pwm_servo(LegAdress,0,angle2pulse(Theta1),angle2pulse(Theta2),angle2pulse(Theta3))
     
 def Calib():
     setLegAngles(front_left, 0, 45, 90)
@@ -384,7 +398,6 @@ def Move_forward():
         y = -l1 
         RIGHT_Inverse_Kinematics(Rear,x,y,z)
         time.sleep(0.038)
-        
     # stop = timeit.default_timer()
     # print(stop - start, " (seconds)")
         
@@ -465,10 +478,13 @@ pwm.set_pwm_freq(60)
 # Move servo on channel O between extremes.
 # Calib()
 initial_position()
+getRollPitch_MPU()
 
 while True:
     Move_forward()    
-    
+    print("Goc truc X: %.1f" %Roll  ,  "Goc truc Y: %.1f" %Pitch)
+    time.sleep(1)
+
     #SL = 20
     #Pose(move_right)
     #Pose(move_left)
