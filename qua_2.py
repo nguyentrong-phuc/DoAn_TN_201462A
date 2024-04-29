@@ -29,7 +29,7 @@ Pitch = 0
 def getRollPitch_MPU():
     global Roll, Pitch # ,preTimeGet
     Roll, Pitch = mpu.get_RP_Angle()
-    # print("Goc truc X: %.1f" %Roll  ,  "Goc truc Y: %.1f" %Pitch)
+    print("Goc truc X: %.1f" %Roll  ,  "Goc truc Y: %.1f" %Pitch)
     threading.Timer(0.5,getRollPitch_MPU).start()
     # timeGet = timeit.default_timer()
     # print(timeGet - preTimeGet, " (seconds)")
@@ -482,8 +482,6 @@ getRollPitch_MPU()
 
 while True:
     Move_forward()    
-    print("Goc truc X: %.1f" %Roll  ,  "Goc truc Y: %.1f" %Pitch)
-    time.sleep(1)
 
     #SL = 20
     #Pose(move_right)
