@@ -1,8 +1,10 @@
+
 from __future__ import division
 import time
 import math as m
 import numpy as np
 import array as arr 
+import timeit
 # Import the PCA9685 module.
 
 import Adafruit_PCA9685
@@ -13,7 +15,7 @@ import Adafruit_PCA9685
 
 # Initialise the PCA9685 using the default address (0x40).
 pwm = Adafruit_PCA9685.PCA9685()
-
+mpu = Adafruit_PCA9685.MPU6050()
 # Alternatively specify a different address and/or bus:
 #pwm = Adafruit_PCA9685.PCA9685(address=0x41, busnum=2)
 
@@ -44,10 +46,10 @@ rear_left = 6
 rear_right = 9
 
 # Offset matrix [t1,t2,t3] <=> [0,45,90]
-FL = arr.array('i', [90, 31, 12]) 
-RL = arr.array('i', [98, 70, 13]) 
-FR = arr.array('i', [90, 83, 167]) 
-RR = arr.array('i', [90, 84, 170]) 
+FL = arr.array('i', [90, 31, 12])   # -> <Front Left>
+RL = arr.array('i', [98, 70, 13])   # -> <Rear Left>
+FR = arr.array('i', [90, 83, 167])  # -> <Front Right>
+RR = arr.array('i', [90, 84, 170])  # -> <Front Right>
 
 # angle to pulse
 def angle2pulse(angle):
@@ -76,7 +78,7 @@ def setLegAngles(LegAdress, Theta1, Theta2, Theta3):
         print("Wrong Leg Adress")
         exit()
     
-def Calip():
+def Calib():
     setLegAngles(front_left, 0, 45, 90)
     setLegAngles(front_right, 0, -45, -90)
     setLegAngles(rear_left, 0, 45, 90)
@@ -119,9 +121,9 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     s3 = np.sqrt(m.fabs(1 - c3**2))
     t3 = m.atan2(s3, c3)
     # Kiem tra dk theta3
-    # if (t3 < 0):
-    #     print("Error Theta3")
-    #     exit()
+    if (t3 < 0):
+        print("Error Theta3")
+        exit()
     # Theta2
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
@@ -131,24 +133,15 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     t1 = t1*180/np.pi
     t2 = t2*180/np.pi
     t3 = t3*180/np.pi
-    
-    FL = arr.array('i', [90, 31, 12]) 
-    RL = arr.array('i', [98, 70, 13]) 
 
     if(leg == Rear):
-        pwm.set_pwm(6,  0,angle2pulse(t1 + RL[0]))
-        pwm.set_pwm(7,  0,angle2pulse(t2 + RL[1]))
-        pwm.set_pwm(8,  0,angle2pulse(t3 + RL[2]))
-        # setLegAngles(rear_left,t1,t2,t3)
+        setLegAngles(rear_left,t1,t2,t3)
     elif(leg == Front):
-        pwm.set_pwm(0,  0,angle2pulse(180 - (t1 + FL[0])))
-        pwm.set_pwm(1,  0,angle2pulse(t2 + FL[1]))
-        pwm.set_pwm(2,  0,angle2pulse(t3 + FL[2]))
-        # setLegAngles(front_left,t1,t2,t3)
+        setLegAngles(front_left,t1,t2,t3)
 
 def RIGHT_Inverse_Kinematics(leg,x,y,z):
     #check work space
-    # Check_work_space(x,y,z)
+    Check_work_space(x,y,z)
     # Theta1
     alpha = m.asin(y/np.sqrt(y**2 + z**2))
     t1 = -(m.asin(l1/np.sqrt(z**2 + y**2)) + alpha)
@@ -164,9 +157,9 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
     s3 = np.sqrt(m.fabs(1 - c3**2))
     t3 = -m.atan2(s3, c3)
     # Kiem tra dk theta3
-    # if (t3 > 0):
-    #     print("Error Theta3")
-    #     exit()
+    if (t3 > 0):
+        print("Error Theta3")
+        exit()
     # Theta2
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
@@ -177,19 +170,10 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
     t2 = t2*180/np.pi
     t3 = t3*180/np.pi
     
-    FR = arr.array('i', [90, 83, 167]) 
-    RR = arr.array('i', [90, 84, 170]) 
-    
     if(leg == Rear):
-        pwm.set_pwm(9,  0,angle2pulse(t1 + RR[0]))
-        pwm.set_pwm(10, 0,angle2pulse(t2 + RR[1]))
-        pwm.set_pwm(11, 0,angle2pulse(t3 + RR[2]))
-        # setLegAngles(rear_right,t1,t2,t3)
+        setLegAngles(rear_right,t1,t2,t3)
     elif(leg == Front):
-        pwm.set_pwm(3,  0,angle2pulse(180 - (t1 + FR[0])))
-        pwm.set_pwm(4,  0,angle2pulse(t2 + FR[1]))
-        pwm.set_pwm(5,  0,angle2pulse(t3 + FR[2]))
-        # setLegAngles(front_right,t1,t2,t3)
+        setLegAngles(front_right,t1,t2,t3)
     
 def initial_position():
     LEFT_Inverse_Kinematics(Front,0,l1,RH)
@@ -358,6 +342,7 @@ def R_P_Y(roll, pitch, yaw):
     pass
 
 def Move_forward():
+    # start = timeit.default_timer()
     for t in np.arange(0,1.005,0.25):
         x = -SL*t+(SL/2) + A_x
         y = -l1 
@@ -399,6 +384,9 @@ def Move_forward():
         y = -l1 
         RIGHT_Inverse_Kinematics(Rear,x,y,z)
         time.sleep(0.038)
+        
+    # stop = timeit.default_timer()
+    # print(stop - start, " (seconds)")
         
             
 def Sit(): 
@@ -475,7 +463,7 @@ def Stand():
 pwm.set_pwm_freq(60)
 
 # Move servo on channel O between extremes.
-# Calip()
+# Calib()
 initial_position()
 
 while True:
