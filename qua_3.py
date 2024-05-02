@@ -65,6 +65,11 @@ RL = arr.array('i', [98, 70, 13])   # -> <Rear Left>
 FR = arr.array('i', [90, 83, 160])  # -> <Front Right>
 RR = arr.array('i', [90, 84, 170])  # -> <Front Right>
 
+posFL = np.array([0, 0, 0])   # -> <Front Left>
+posRL = np.array([0, 0, 0])   # -> <Rear Left>
+posFR = np.array([0, 0, 0])  # -> <Front Right>
+posRR = np.array([0, 0, 0])  # -> <Front Right>
+
 # angle to pulse
 def angle2pulse(angle):
     return (int)(100+500*angle/180)
@@ -191,14 +196,77 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
     elif(leg == Front):
         setLegAngles(front_right,t1,t2,t3)
     
+    
 def initial_position():
+    global posFL, posRL, posFR, posRR
     LEFT_Inverse_Kinematics(Front, 0,l1,RH)
     RIGHT_Inverse_Kinematics(Front, 0,-l1,RH)
-    LEFT_Inverse_Kinematics(Rear, 0,l1,RH)  
+    LEFT_Inverse_Kinematics(Rear, 0,l1,RH)
     RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH) 
+    posFL= [0,l1,RH]
+    posFR = [0,-l1,RH]
+    posRL = [0,l1,RH] 
+    posRR = [0,-l1,RH]
     time.sleep(2)
 
 def R_P_Y(roll, pitch, yaw):
+    pass
+
+def all_Move(x, y, z, Time_delay): # di chuyen tat ca cac chan 1 doan theo huong x,y,z
+    global posFL, posRL, posFR, posRR
+    for t in np.arange(0.125, 1.005, 0.125):
+        RIGHT_Inverse_Kinematics(Front, posFR[0] - x*t, posFR[1] + y*t, posFR[2] - z*t)
+        RIGHT_Inverse_Kinematics(Rear, posRR[0] - x*t, posRR[1] + y*t, posRR[2] - z*t)
+        LEFT_Inverse_Kinematics(Rear, posRL[0] - x*t, posRL[1] + y*t, posRL[2] - z*t)
+        LEFT_Inverse_Kinematics(Front, posFL[0] - x*t, posFL[1] + y*t, posFL[2] - z*t)
+        time.sleep(Time_delay)
+    posFR = [posFR[0] - x, posFR[1] + y, posFR[2] - z]
+    posFL = [posFL[0] - x, posFL[1] + y, posFL[2] - z]
+    posRR = [posRR[0] - x, posRR[1] + y, posRR[2] - z]
+    posRL = [posRL[0] - x, posRL[1] + y, posRL[2] - z]
+    
+def all_To_initial(Time_delay):
+    global posFL, posRL, posFR, posRR
+    for t in np.arange(0, 1.005, 0.25):
+        RIGHT_Inverse_Kinematics(Front, posFR[0] - posFR[0]*t, posFR[1] - (posFR[1]+l1)*t, posFR[2] - (posFR[2]-RH)*t)
+        RIGHT_Inverse_Kinematics(Rear, posRR[0] - posRR[0]*t, posRR[1] - (posRR[1]+l1)*t, posRR[2] - (posRR[2]-RH)*t)
+        LEFT_Inverse_Kinematics(Rear, posRL[0] - posRL[0]*t, posRL[1] - (posRL[0]-l1)*t, posRL[2] - (posRL[2]-RH)*t)
+        LEFT_Inverse_Kinematics(Front, posFL[0] - posFL[0]*t, posFL[1] - (posFL[1]-l1)*t, posFL[2] - (posFL[2]-RH)*t)
+        time.sleep(Time_delay)
+    posFL= [0,l1,RH]
+    posFR = [0,-l1,RH]
+    posRL = [0,l1,RH] 
+    posRR = [0,-l1,RH]
+    
+def startWalk(SL_x, SL_y, Time_delay):
+    if(SL_x > 0):   A_x = -25   # forward
+    elif(SL_x < 0): A_x = 20    # backward
+    else:           A_x = -10
+    
+    if(SL_y > 0):   A_y = 20    # right
+    elif(SL_y < 0): A_y = -20   # left
+    else:           A_y = 0
+    
+    for t in np.arange(0,0.505,0.125):
+        x = -SL_x*t + A_x
+        y = -l1 + SL_y*(t) + A_y
+        z = RH 
+        RIGHT_Inverse_Kinematics(Rear,x,y,z)
+        z += A_z
+        y = l1 + SL_y*(t) + A_y
+        LEFT_Inverse_Kinematics(Front,x,y,z)
+
+        alpha= np.pi*(1-2*t)
+        x = (SL_x/4)*np.cos(alpha) + A_x + SL_x/4
+        y = l1 - (SL_y/4)*np.cos(alpha) + A_y - SL_y/4
+        z = RH/2 + SH*np.sin(alpha)
+        LEFT_Inverse_Kinematics(Rear,x,y,z)
+        z += A_z
+        y = -l1 - (SL_y/4)*np.cos(alpha) + A_y - SL_y/4
+        RIGHT_Inverse_Kinematics(Front,x,y,z)
+        time.sleep(Time_delay)
+        
+def endWalk():
     pass
 
 def Walk(SL_x, SL_y, Time_delay):
@@ -234,19 +302,19 @@ def Walk(SL_x, SL_y, Time_delay):
     for t in np.arange(0,1.005,0.125):
         alpha= np.pi*(1-t)
         x = (SL_x/2)*np.cos(alpha) + A_x
-        y = -l1 - (SL_y/2)*np.cos(alpha)
+        y = -l1 - (SL_y/2)*np.cos(alpha) + A_y
         z = RH+SH*np.sin(alpha) 
         RIGHT_Inverse_Kinematics(Front,x,y,z)
         z += A_z
-        y = l1 - (SL_y/2)*np.cos(alpha)
+        y = l1 - (SL_y/2)*np.cos(alpha) + A_y
         LEFT_Inverse_Kinematics(Rear,x,y,z)
         
         x = -SL_x*(t)+(SL_x/2) + A_x
-        y = l1 + SL_y*(t)-(SL_y/2)
+        y = l1 + SL_y*(t)-(SL_y/2) + A_y
         z = RH
         LEFT_Inverse_Kinematics(Front,x,y,z)
         z += A_z
-        y = -l1 + SL_y*(t)-(SL_y/2)
+        y = -l1 + SL_y*(t)-(SL_y/2) + A_y
         RIGHT_Inverse_Kinematics(Rear,x,y,z)
         time.sleep(Time_delay)
     stop = timeit.default_timer()
@@ -460,8 +528,34 @@ pwm.set_pwm_freq(60)
 # Calib()
 initial_position()
 # getRollPitch_MPU()
+# startWalk(60,0,1)
+
 
 while True:
+    ### Dung ngoi (theo initial())
+    # all_Move(0,0,-60, 0.025)
+    # all_Move(0,0,60, 0.025)
+    
+    ### chom len, xuong (theo initial())
+    # all_Move(30,0,0, 0.025)
+    # all_Move(-30,0,0, 0.025)
+    # all_Move(-30,0,0, 0.025)
+    # all_Move(30,0,0, 0.025)
+    
+    ### chom trai, phai (theo initial())
+    # all_Move(0,30,0, 0.025)
+    # all_Move(0,-30,0, 0.025)
+    # all_Move(0,-30,0, 0.025)
+    # all_Move(0,30,0, 0.025)
+    
+    ### test all_To_initial()
+    all_Move(30,0,60, 0.025)
+    time.sleep(1)
+    all_Move(0,30,-30, 0.025)
+    time.sleep(1)
+    all_To_initial(0.025)
+    time.sleep(1)
+    
     ### forward
     # Walk(60, 0, 0.01)  
       
@@ -473,8 +567,12 @@ while True:
     
     ### move left
     # Walk(0, -40, 0.01)    
+    
+    ###
+    # Walk(40, -40, 0.01)  
+    # Walk(-40, 40, 0.01)
 
-    Walk_C(-60,-60,0.01)
+    # Walk_C(-60,-60,0.01)
     
 
 
