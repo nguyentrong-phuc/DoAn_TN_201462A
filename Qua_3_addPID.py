@@ -103,6 +103,23 @@ def Check_work_space(x,y,z):
         print("The position :(",x,y,z,") is Out of workspace")
         exit()
 
+def Check_limit_angle(t1,t2,t3):
+    t1min = 
+    t1max = 
+    t2min =
+    t2max = 
+    t3min = 
+    t3max = 
+    if(t1 <= t1min or t1 >= t1max):
+        print("theta1 = ", t1," --> theta1 exceeding the limit")
+        exit()
+    if(t2 <= t2min or t2 >= t2max):
+        print("theta2 = ", t2," --> theta2 exceeding the limit")
+        exit()
+    if(t3 <= t3min or t3 >= t3max):
+        print("theta3 = ", t3," --> theta3 exceeding the limit")
+        exit()
+
 def LEFT_Inverse_Kinematics(leg,x,y,z):
     global posFL, posRL, posFR, posRR
     #check work space
@@ -129,7 +146,7 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
     t2 = m.atan2(s2, c2)
-
+    Check_limit_angle(t1,t2,t3)
     # Convert Rad -> Deg
     t1 = t1*180/np.pi
     t2 = t2*180/np.pi
@@ -141,8 +158,6 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     elif(leg == Front):
         setLegAngles(front_left,t1,t2,t3)
         posFL = [x, y, z] 
-
-
 
 def RIGHT_Inverse_Kinematics(leg,x,y,z):
     global posFL, posRL, posFR, posRR
@@ -170,7 +185,7 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
     t2 = -m.atan2(s2, c2)
-    
+    Check_limit_angle(t1,t2,t3)
     # Convert Rad -> Deg
     t1 = t1*180/np.pi
     t2 = t2*180/np.pi
@@ -183,6 +198,39 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
         setLegAngles(front_right,t1,t2,t3)
         posFR = [x, y, z] 
     
+def initial_position():
+    LEFT_Inverse_Kinematics(Front, 0,l1,RH)
+    RIGHT_Inverse_Kinematics(Front, 0,-l1,RH)
+    LEFT_Inverse_Kinematics(Rear, 0,l1,RH)
+    RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH) 
+    time.sleep(2)
+
+def all_Move(x, y, z, Time_delay): # di chuyen tat ca cac chan 1 doan theo huong x,y,z
+    FR = posFR
+    RR = posRR
+    FL = posFL
+    RL = posRL
+    # for t in np.arange(0.125, 1.005, 0.125):
+    for t in np.arange(0.25, 1.005, 0.25):
+        RIGHT_Inverse_Kinematics(Front, FR[0] - x*t, FR[1] + y*t, FR[2] - z*t)
+        RIGHT_Inverse_Kinematics(Rear, RR[0] - x*t, RR[1] + y*t, RR[2] - z*t)
+        LEFT_Inverse_Kinematics(Rear, RL[0] - x*t, RL[1] + y*t, RL[2] - z*t)
+        LEFT_Inverse_Kinematics(Front, FL[0] - x*t, FL[1] + y*t, FL[2] - z*t)
+        time.sleep(Time_delay)
+    
+def all_To_initial(Time_delay):
+    FR = posFR
+    RR = posRR
+    FL = posFL
+    RL = posRL
+    # for t in np.arange(0.125, 1.005, 0.125):
+    for t in np.arange(0.25, 1.005, 0.25):
+        RIGHT_Inverse_Kinematics(Front, FR[0] - FR[0]*t, FR[1] - (FR[1]+l1)*t, FR[2] - (FR[2]-RH)*t)
+        RIGHT_Inverse_Kinematics(Rear, RR[0] - RR[0]*t, RR[1] - (RR[1]+l1)*t, RR[2] - (RR[2]-RH)*t)
+        LEFT_Inverse_Kinematics(Rear, RL[0] - RL[0]*t, RL[1] - (RL[1]-l1)*t, RL[2] - (RL[2]-RH)*t)
+        LEFT_Inverse_Kinematics(Front, FL[0] - FL[0]*t, FL[1] - (FL[1]-l1)*t, FL[2] - (FL[2]-RH)*t)
+        time.sleep(Time_delay)
+
 
 ###
 Roll = 0
@@ -271,39 +319,6 @@ def self_balancing_roll(roll_angle):
 '''
 ----------------------------------------------
 '''
-
-def initial_position():
-    LEFT_Inverse_Kinematics(Front, 0,l1,RH)
-    RIGHT_Inverse_Kinematics(Front, 0,-l1,RH)
-    LEFT_Inverse_Kinematics(Rear, 0,l1,RH)
-    RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH) 
-    time.sleep(2)
-
-def all_Move(x, y, z, Time_delay): # di chuyen tat ca cac chan 1 doan theo huong x,y,z
-    FR = posFR
-    RR = posRR
-    FL = posFL
-    RL = posRL
-    # for t in np.arange(0.125, 1.005, 0.125):
-    for t in np.arange(0.25, 1.005, 0.25):
-        RIGHT_Inverse_Kinematics(Front, FR[0] - x*t, FR[1] + y*t, FR[2] - z*t)
-        RIGHT_Inverse_Kinematics(Rear, RR[0] - x*t, RR[1] + y*t, RR[2] - z*t)
-        LEFT_Inverse_Kinematics(Rear, RL[0] - x*t, RL[1] + y*t, RL[2] - z*t)
-        LEFT_Inverse_Kinematics(Front, FL[0] - x*t, FL[1] + y*t, FL[2] - z*t)
-        time.sleep(Time_delay)
-    
-def all_To_initial(Time_delay):
-    FR = posFR
-    RR = posRR
-    FL = posFL
-    RL = posRL
-    # for t in np.arange(0.125, 1.005, 0.125):
-    for t in np.arange(0.25, 1.005, 0.25):
-        RIGHT_Inverse_Kinematics(Front, FR[0] - FR[0]*t, FR[1] - (FR[1]+l1)*t, FR[2] - (FR[2]-RH)*t)
-        RIGHT_Inverse_Kinematics(Rear, RR[0] - RR[0]*t, RR[1] - (RR[1]+l1)*t, RR[2] - (RR[2]-RH)*t)
-        LEFT_Inverse_Kinematics(Rear, RL[0] - RL[0]*t, RL[1] - (RL[1]-l1)*t, RL[2] - (RL[2]-RH)*t)
-        LEFT_Inverse_Kinematics(Front, FL[0] - FL[0]*t, FL[1] - (FL[1]-l1)*t, FL[2] - (FL[2]-RH)*t)
-        time.sleep(Time_delay)
 
 def R_P_Y(roll, pitch, yaw):
     pass
