@@ -16,14 +16,13 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     c3 = (A**2 + B**2 - l2**2 - l3**2) / (2 * l2 * l3)
     s3 = np.sqrt(m.fabs(1 - c3**2))
     t3 = m.atan2(s3, c3)
-    # Kiem tra dk theta3
-    if (t3 < 0):
-        print("Error Theta3")
-        exit()
+    t3 = t3*(L1/l1)
+    
     # Theta2
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
     t2 = m.atan2(s2, c2)
+    t2 = t2*(L1/l1)
 
     # Convert Rad -> Deg
     t1 = t1*180/np.pi
