@@ -116,7 +116,7 @@ def Inverse_Kinematics(legAdress, x, y, z):
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
     t2 = m.atan2(s2, c2)
-    t2 = t2*(l1/l1)
+    t2 = t2*(L1/l1)
     # Convert Rad -> Deg
     t1 = t1*180/np.pi
     t2 = t2*180/np.pi
