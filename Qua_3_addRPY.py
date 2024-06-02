@@ -101,7 +101,7 @@ def set_servo_pulse(channel, pulse):
 def Check_work_space(x,y,z):
     k1 = x**2 + y**2 + z**2
     k2 = y**2 + z**2
-    if( k2< l1**2 or k1> (l1**2 + (l2 + l3)**2)):
+    if( k2 < (l1**2 + (l2 - l3)**2) or k1 > (l1**2 + (l2 + l3)**2)):
         print("The position :(",x,y,z,") is Out of workspace")
         exit()
 
@@ -124,9 +124,9 @@ def LEFT_Inverse_Kinematics(leg,x,y,z):
     s3 = np.sqrt(m.fabs(1 - c3**2))
     t3 = m.atan2(s3, c3)
     # Kiem tra dk theta3
-    if (t3 < 0):
-        print("Error Theta3")
-        exit()
+    # if (t3 < 0):
+    #     print("Error Theta3")
+    #     exit()
     # Theta2
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
@@ -164,9 +164,9 @@ def RIGHT_Inverse_Kinematics(leg,x,y,z):
     s3 = np.sqrt(m.fabs(1 - c3**2))
     t3 = -m.atan2(s3, c3)
     # Kiem tra dk theta3
-    if (t3 > 0):
-        print("Error Theta3")
-        exit()
+    # if (t3 > 0):
+    #     print("Error Theta3")
+    #     exit()
     # Theta2
     s2 = (A * (l2 + l3 * c3) + B * l3 * s3)  
     c2 = (B * (l2 + l3 * c3) - A * l3 * s3)  
@@ -205,9 +205,9 @@ def getRollPitch_MPU():
 self balancing test 
 '''
 def PID(setpoint,current_value):
-    kp=0.125
-    ki=0
-    kd=0
+    kp=0.125 #0.15
+    ki=0.01 #0.02
+    kd=0.001 #0.002
     sample_time = 0.02
     err = setpoint - current_value # roll,pitch angle 
     err_p =0 
@@ -305,8 +305,8 @@ def all_To_initial(Time_delay):
         LEFT_Inverse_Kinematics(Front, FL[0] - FL[0]*t, FL[1] - (FL[1]-l1)*t, FL[2] - (FL[2]-RH)*t)
         time.sleep(Time_delay)
 
-A = 239.6
-B = 80.25
+A = 239.6 # robot length
+B = 80.25 # robot width
 g_FL = np.array([[A/2],[B/2],[0]])
 g_FR = np.array([[A/2],[-B/2],[0]])
 g_RL = np.array([[-A/2],[B/2],[0]])
@@ -317,73 +317,66 @@ pre_Pitch_RPY = 0
 pre_Yaw_RPY = 0
 def Roll_Pitch_Yaw(roll, pitch, yaw):
     global pre_Roll_RPY, pre_Pitch_RPY, pre_Yaw_RPY
+
+    Roll_RPY = roll*np.pi/180
+    roll = Roll_RPY - pre_Roll_RPY
+    pre_Roll_RPY = Roll_RPY
+ 
+    Pitch_RPY = pitch*np.pi/180
+    pitch = Pitch_RPY - pre_Pitch_RPY
+    pre_Pitch_RPY = Pitch_RPY
+
+    Yaw_RPY = yaw*np.pi/180
+    yaw = Yaw_RPY - pre_Yaw_RPY
+    pre_Yaw_RPY = Yaw_RPY  
     
-    if(roll<=1 and roll>=-1):
-        LEFT_Inverse_Kinematics(Front, 0,l1,RH)
-        RIGHT_Inverse_Kinematics(Front, 0,-l1,RH)
-        LEFT_Inverse_Kinematics(Rear, 0,l1,RH)
-        RIGHT_Inverse_Kinematics(Rear, 0,-l1,RH)
-        pre_Roll_RPY = 0
-    else: 
-        Roll_RPY = roll*np.pi/180
-        roll = Roll_RPY - pre_Roll_RPY
-        pre_Roll_RPY = Roll_RPY
-            
-        # if(pitch<=1 and pitch>=-1):
-        #     pitch = 1
-        Pitch_RPY = pitch*np.pi/180
-        pitch = Pitch_RPY - pre_Pitch_RPY
-        pre_Pitch_RPY = Pitch_RPY
-        
-        # if(yaw<=1 and yaw>=-1):
-        #     yaw = 1
-        Yaw_RPY = yaw*np.pi/180
-        yaw = Yaw_RPY - pre_Yaw_RPY
-        pre_Yaw_RPY = Yaw_RPY  
-        
-        
-        pos_FL = np.array([[posFL[0]],[posFL[1]],[posFL[2]]]) + g_FL
-        pos_FR = np.array([[posFR[0]],[posFR[1]],[posFR[2]]]) + g_FR
-        pos_RL = np.array([[posRL[0]],[posRL[1]],[posRL[2]]]) + g_RL
-        pos_RR = np.array([[posRR[0]],[posRR[1]],[posRR[2]]]) + g_RR
-        
-        rotationX = np.array([  [1,     0,               0              ],
-                                [0,     np.cos(-roll),   -np.sin(-roll) ],
-                                [0,     np.sin(-roll),   np.cos(-roll)  ]])
+    pos_FL = np.array([[posFL[0]],[posFL[1]],[posFL[2]]]) + g_FL
+    pos_FR = np.array([[posFR[0]],[posFR[1]],[posFR[2]]]) + g_FR
+    pos_RL = np.array([[posRL[0]],[posRL[1]],[posRL[2]]]) + g_RL
+    pos_RR = np.array([[posRR[0]],[posRR[1]],[posRR[2]]]) + g_RR
+    
+    rotationX = np.array([  [1,     0,               0              ],
+                            [0,     np.cos(-roll),   -np.sin(-roll) ],
+                            [0,     np.sin(-roll),   np.cos(-roll)  ]])
 
-        rotationY = np.array([  [np.cos(-pitch),    0,  np.sin(-pitch)  ],
-                                [0,                 1,  0               ],
-                                [-np.sin(-pitch),   0,  np.cos(-pitch)  ]])
-        
-        rotationZ = np.array([  [np.cos(-yaw),  -np.sin(-yaw),  0   ],
-                                [np.sin(-yaw),  np.cos(-yaw),   0   ],
-                                [0,             0,              1   ]])
+    rotationY = np.array([  [np.cos(-pitch),    0,  np.sin(-pitch)  ],
+                            [0,                 1,  0               ],
+                            [-np.sin(-pitch),   0,  np.cos(-pitch)  ]])
+    
+    rotationZ = np.array([  [np.cos(-yaw),  -np.sin(-yaw),  0   ],
+                            [np.sin(-yaw),  np.cos(-yaw),   0   ],
+                            [0,             0,              1   ]])
 
-        
-        new_posFL = rotationX.dot(pos_FL) 
-        new_posFR = rotationX.dot(pos_FR) 
-        new_posRL = rotationX.dot(pos_RL) 
-        new_posRR = rotationX.dot(pos_RR) 
-        
-        new_posFL = rotationY.dot(new_posFL) - g_FL
-        new_posFR = rotationY.dot(new_posFR) - g_FR
-        new_posRL = rotationY.dot(new_posRL) - g_RL
-        new_posRR = rotationY.dot(new_posRR) - g_RR
-        
-        print(new_posFL[0,0],new_posFL[1,0],new_posFL[2,0])
-        print(new_posFR[0,0],new_posFR[1,0],new_posFR[2,0])
-        print(new_posRL[0,0],new_posRL[1,0],new_posRL[2,0])
-        print(new_posRR[0,0],new_posRR[1,0],new_posRR[2,0])
+    
+    new_posFL = rotationX.dot(pos_FL)
+    new_posFR = rotationX.dot(pos_FR) 
+    new_posRL = rotationX.dot(pos_RL) 
+    new_posRR = rotationX.dot(pos_RR) 
+    
+    new_posFL = rotationY.dot(new_posFL) 
+    new_posFR = rotationY.dot(new_posFR)
+    new_posRL = rotationY.dot(new_posRL) 
+    new_posRR = rotationY.dot(new_posRR) 
+    
+    new_posFL = rotationZ.dot(new_posFL) - g_FL
+    new_posFR = rotationZ.dot(new_posFR) - g_FR
+    new_posRL = rotationZ.dot(new_posRL) - g_RL
+    new_posRR = rotationZ.dot(new_posRR) - g_RR
+    
+    print(new_posFL[0,0],new_posFL[1,0],new_posFL[2,0])
+    print(new_posFR[0,0],new_posFR[1,0],new_posFR[2,0])
+    print(new_posRL[0,0],new_posRL[1,0],new_posRL[2,0])
+    print(new_posRR[0,0],new_posRR[1,0],new_posRR[2,0])
 
-        LEFT_Inverse_Kinematics(Front, new_posFL[0,0], new_posFL[1,0], new_posFL[2,0])
-        RIGHT_Inverse_Kinematics(Front, new_posFR[0,0], new_posFR[1,0], new_posFR[2,0])
-        LEFT_Inverse_Kinematics(Rear, new_posRL[0,0], new_posRL[1,0], new_posRL[2,0])
-        RIGHT_Inverse_Kinematics(Rear, new_posRR[0,0], new_posRR[1,0], new_posRR[2,0])
+    LEFT_Inverse_Kinematics(Front, new_posFL[0,0], new_posFL[1,0], new_posFL[2,0])
+    RIGHT_Inverse_Kinematics(Front, new_posFR[0,0], new_posFR[1,0], new_posFR[2,0])
+    LEFT_Inverse_Kinematics(Rear, new_posRL[0,0], new_posRL[1,0], new_posRL[2,0])
+    RIGHT_Inverse_Kinematics(Rear, new_posRR[0,0], new_posRR[1,0], new_posRR[2,0])
 
-def Trot_gait():
+def Walk_gait():
     pass    
 
-def startWalk(SL_x, SL_y, Time_delay):
+def startTrot(SL_x, SL_y, Time_delay):
     if(SL_x > 0):   A_x = -25;  A_z = -10   # forward
     elif(SL_x < 0): A_x = 20;   A_z = -5  # backward
     else:           A_x = -7;   A_z = 0
@@ -411,7 +404,7 @@ def startWalk(SL_x, SL_y, Time_delay):
         LEFT_Inverse_Kinematics(Rear,x,y,z)
         time.sleep(Time_delay)
         
-def endWalk(SL_x, SL_y, Time_delay):
+def endTrot(SL_x, SL_y, Time_delay):
     if(SL_x > 0):   A_x = -25;  A_z = -10   # forward
     elif(SL_x < 0): A_x = 20;   A_z = -5  # backward
     else:           A_x = -7;   A_z = 0
@@ -439,7 +432,7 @@ def endWalk(SL_x, SL_y, Time_delay):
         RIGHT_Inverse_Kinematics(Rear,x,y,z)
         time.sleep(Time_delay)   
 
-def Walk(SL_x, SL_y, Time_delay):
+def Trot_gait(SL_x, SL_y, Time_delay):
     start = timeit.default_timer()
     # adjust center of mass
     if(SL_x > 0):   A_x = -25;  A_z = -10   # forward
@@ -490,7 +483,7 @@ def Walk(SL_x, SL_y, Time_delay):
     stop = timeit.default_timer()
     print(stop - start, " (seconds)")
         
-def Walk_C(SL_xleft, SL_xright, Time_delay):
+def Trot_C(SL_xleft, SL_xright, Time_delay):
     pass
 
 def Turn(CW,CCW):
@@ -582,51 +575,50 @@ pwm.set_pwm_freq(60)
 # Move servo on channel O between extremes.
 # Calib()
 initial_position()
-# getRollPitch_MPU()
+getRollPitch_MPU()
 
-## walk forward
+## Trot forward
 # all_Move(25, 0, 0, 0.01)
-# startWalk(60,0,0.01)
+# startTrot(60,0,0.01)
 
-### walk backward
+### Trot backward
 # all_Move(-20, 0, 0, 0.01)
-# startWalk(-60,0,0.01)
+# startTrot(-60,0,0.01)
 
-### walk right
+### Trot right
 # all_Move(10, 20, 0, 0.01)
-# startWalk(0, 40, 0.02)
+# startTrot(0, 40, 0.02)
 
-### walk left
+### Trot left
 # all_Move(10, -20, 0, 0.01)
-# startWalk(0, -40, 0.02)
+# startTrot(0, -40, 0.02)
 
 ## 5 step forward
 # all_Move(25, 0, 0, 0.01)
-# startWalk(60,0,0.01)
+# startTrot(60,0,0.01)
 # for _ in range(5):
-#     Walk(60, 0, 0.01)   
-# endWalk(60, 0, 0.01) 
+#     Trot_gait(60, 0, 0.01)   
+# endTrot(60, 0, 0.01) 
 # all_Move(-25, 0, 0, 0.01)
 
 # time.sleep(1)
 
 ## 5 step backward
 # all_Move(-25, 0, 0, 0.01)
-# startWalk(-60,0,0.01)
+# startTrot(-60,0,0.01)
 # for _ in range(5):
-#     Walk(-60, 0, 0.01)   
-# endWalk(-60, 0, 0.01) 
+#     Trot_gait(-60, 0, 0.01)   
+# endTrot(-60, 0, 0.01) 
 # all_Move(25, 0, 0, 0.01)
 
-while True:
+# while True:
     
-    r_oll = input('Nhap roll: ')
-    Roll_Pitch_Yaw(r_oll, 0, 0)
+    # angle_input = input('Nhap pitch: ')
+    # Roll_Pitch_Yaw(0, angle_input, 0)
     
-    
-    # startWalk(0,-40,0.01)
+    # startTrot(0,-40,0.01)
     # time.sleep(1)
-    # endWalk(0,-40,0.01)    
+    # endTrot(0,-40,0.01)    
     # time.sleep(1)
 
     ### Dung ngoi (theo initial())
@@ -661,24 +653,23 @@ while True:
     # time.sleep(1)
     
     ### forward
-    # Walk(60, 0, 0.01)  
+    # Trot_gait(60, 0, 0.01)  
       
     ### bachward
-    # Walk(-60, 0, 0.01)   
+    # Trot_gait(-60, 0, 0.01)   
     
     ### move right
-    # Walk(0, 40, 0.01) 
+    # Trot_gait(0, 40, 0.01) 
     
     ### move left
-    # Walk(0, -40, 0.01)    
+    # Trot_gait(0, -40, 0.01)    
     
     ### multi direction
-    # Walk(40, -40, 0.01)  
-    # Walk(-40, 40, 0.01)
+    # Trot_gait(40, -40, 0.01)  
+    # Trot_gait(-40, 40, 0.01)
 
-    # Walk_C(-60,-60,0.01)
+    # Trot_C(-60,-60,0.01)
     # exit
 
 
-    
     
