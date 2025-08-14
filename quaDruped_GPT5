@@ -1,0 +1,243 @@
+from __future__ import division
+import time, math as m, numpy as np, array as arr, timeit
+import Adafruit_PCA9685
+
+# ==== IMU (chọn 1 trong 2) ====
+USE_MPU = False
+try:
+    from mpu6050 import mpu6050
+    imu = mpu6050(0x68)
+    USE_MPU = True
+except:
+    pass
+
+def get_RP_Angle():
+    """
+    Trả về (roll_deg, pitch_deg).
+    Nếu không có MPU, trả 0 để không crash.
+    """
+    if USE_MPU:
+        acc = imu.get_accel_data()  # {'x':..., 'y':..., 'z':...} đơn vị g
+        ax, ay, az = acc['x'], acc['y'], acc['z']
+        # ước lượng roll/pitch đơn giản từ accel (đủ để demo)
+        roll  = m.degrees(m.atan2(ay, az))
+        pitch = m.degrees(m.atan2(-ax, m.sqrt(ay*ay + az*az)))
+        return roll, pitch
+    else:
+        return 0.0, 0.0
+
+# ==== PCA9685 ====
+pwm = Adafruit_PCA9685.PCA9685()
+pwm.set_pwm_freq(60)
+
+# Map 1 chân -> 3 kênh PCA9685 (sửa theo đấu dây thực tế)
+LEG_CHANNELS = {
+    'FL': (0, 1, 2),
+    'FR': (3, 4, 5),
+    'RL': (6, 7, 8),
+    'RR': (9,10,11),
+}
+
+servo_min = 100
+servo_max = 600
+
+def angle2pulse(angle_deg):
+    # 0..180 → 100..600
+    pulse = int(100 + 500*angle_deg/180.0)
+    return max(servo_min, min(servo_max, pulse))
+
+def set_leg_servo_triplet(leg_key, t1, t2, t3):
+    ch1, ch2, ch3 = LEG_CHANNELS[leg_key]
+    pwm.set_pwm(ch1, 0, angle2pulse(t1))
+    pwm.set_pwm(ch2, 0, angle2pulse(t2))
+    pwm.set_pwm(ch3, 0, angle2pulse(t3))
+
+# ==== Hình học robot & offset ====
+l1, l2, l3 = 46.4, 100, 100
+RH, SH = -140, 40
+
+Front, Rear = 30, 31
+front_left, front_right, rear_left, rear_right = 0, 3, 6, 9
+
+# Offset matrix [t1,t2,t3] <=> [0,45,90]
+FL_off = arr.array('i', [90, 27, 12])
+RL_off = arr.array('i', [98, 70, 13])
+FR_off = arr.array('i', [90, 83, 160])
+RR_off = arr.array('i', [90, 84, 170])
+
+# Pos (x,y,z) từng chân (dùng list cho gọn)
+posFL = [0.0, 0.0, 0.0]
+posFR = [0.0, 0.0, 0.0]
+posRL = [0.0, 0.0, 0.0]
+posRR = [0.0, 0.0, 0.0]
+
+def setLegAngles(LegAdress, Theta1, Theta2, Theta3):
+    # áp offset và hướng quay theo từng chân
+    if LegAdress == front_left:
+        t1 = 180 - (Theta1 + FL_off[0])
+        t2 = Theta2 + FL_off[1]
+        t3 = Theta3 + FL_off[2]
+        set_leg_servo_triplet('FL', t1, t2, t3)
+
+    elif LegAdress == front_right:
+        t1 = 180 - (Theta1 + FR_off[0])
+        t2 = Theta2 + FR_off[1]
+        t3 = Theta3 + FR_off[2]
+        set_leg_servo_triplet('FR', t1, t2, t3)
+
+    elif LegAdress == rear_left:
+        t1 = Theta1 + RL_off[0]
+        t2 = Theta2 + RL_off[1]
+        t3 = Theta3 + RL_off[2]
+        set_leg_servo_triplet('RL', t1, t2, t3)
+
+    elif LegAdress == rear_right:
+        t1 = Theta1 + RR_off[0]
+        t2 = Theta2 + RR_off[1]
+        t3 = Theta3 + RR_off[2]
+        set_leg_servo_triplet('RR', t1, t2, t3)
+    else:
+        raise ValueError("Wrong Leg Address")
+
+def Check_work_space(x,y,z):
+    k1 = x**2 + y**2 + z**2
+    k2 = y**2 + z**2
+    if (k2 < (l1**2 + (l2 - l3)**2)) or (k1 > (l1**2 + (l2 + l3)**2)):
+        raise ValueError("Out of workspace: (%.2f, %.2f, %.2f)" % (x,y,z))
+
+def LEFT_Inverse_Kinematics(leg, x, y, z):
+    global posFL, posRL
+    Check_work_space(x,y,z)
+    alpha = m.acos(y/m.sqrt(y*y + z*z))
+    t1 = -(m.acos(l1/m.sqrt(z*z + y*y)) - alpha)
+    c1, s1 = m.cos(t1), m.sin(t1)
+
+    A = -x
+    B = (l1*c1 - y)/s1 if abs(s1) > 1e-6 else (-l1*s1 - z)/max(c1, 1e-6)
+
+    c3 = (A*A + B*B - l2*l2 - l3*l3) / (2*l2*l3)
+    c3 = max(-1.0, min(1.0, c3))
+    s3 = m.sqrt(max(0.0, 1 - c3*c3))
+    t3 = m.atan2(s3, c3)
+
+    s2 = (A*(l2 + l3*c3) + B*l3*s3)
+    c2 = (B*(l2 + l3*c3) - A*l3*s3)
+    t2 = m.atan2(s2, c2)
+
+    t1d, t2d, t3d = [m.degrees(t) for t in (t1, t2, t3)]
+    if leg == Rear:
+        setLegAngles(rear_left, t1d, t2d, t3d)
+        posRL = [x, y, z]
+    else:
+        setLegAngles(front_left, t1d, t2d, t3d)
+        posFL = [x, y, z]
+
+def RIGHT_Inverse_Kinematics(leg, x, y, z):
+    global posFR, posRR
+    Check_work_space(x,y,z)
+    alpha = m.asin(y/m.sqrt(y*y + z*z))
+    t1 = -(m.asin(l1/m.sqrt(z*z + y*y)) + alpha)
+    c1, s1 = m.cos(t1), m.sin(t1)
+
+    A = -x
+    B = (-l1*c1 - y)/s1 if abs(s1) > 1e-6 else (l1*s1 - z)/max(c1, 1e-6)
+
+    c3 = (A*A + B*B - l2*l2 - l3*l3) / (2*l2*l3)
+    c3 = max(-1.0, min(1.0, c3))
+    s3 = m.sqrt(max(0.0, 1 - c3*c3))
+    t3 = -m.atan2(s3, c3)
+
+    s2 = (A*(l2 + l3*c3) + B*l3*s3)
+    c2 = (B*(l2 + l3*c3) - A*l3*s3)
+    t2 = -m.atan2(s2, c2)
+
+    t1d, t2d, t3d = [m.degrees(t) for t in (t1, t2, t3)]
+    if leg == Rear:
+        setLegAngles(rear_right, t1d, t2d, t3d)
+        posRR = [x, y, z]
+    else:
+        setLegAngles(front_right, t1d, t2d, t3d)
+        posFR = [x, y, z]
+
+# ==== PID có trạng thái ====
+class PIDController:
+    def __init__(self, kp=0.125, ki=0.01, kd=0.001, dt=0.02, out_lim=20):
+        self.kp, self.ki, self.kd = kp, ki, kd
+        self.dt = dt
+        self.out_lim = out_lim
+        self.err_p = 0.0
+        self.iterm = 0.0
+    def compute(self, setpoint, measured):
+        err = setpoint - measured
+        self.iterm += self.ki * err * self.dt
+        dterm = self.kd * (err - self.err_p) / self.dt
+        self.err_p = err
+        out = self.kp*err + self.iterm + dterm
+        return max(-self.out_lim, min(self.out_lim, out))
+
+pid_pitch = PIDController()
+pid_roll  = PIDController()
+
+def self_balancing_pitch(pitch_angle_deg):
+    global posFL, posFR, posRL, posRR
+    x = 239.6
+    corr = m.tan(m.radians(pid_pitch.compute(0, pitch_angle_deg)))
+    dz = x/2 * corr
+    posFL[2] += dz; posFR[2] += dz
+    RIGHT_Inverse_Kinematics(Front, 0, -l1, posFR[2])
+    LEFT_Inverse_Kinematics(Front, 0,  l1, posFL[2])
+    posRL[2] -= dz; posRR[2] -= dz
+    RIGHT_Inverse_Kinematics(Rear, 0, -l1, posRR[2])
+    LEFT_Inverse_Kinematics(Rear, 0,  l1, posRL[2])
+
+def self_balancing_roll(roll_angle_deg):
+    global posFL, posFR, posRL, posRR
+    x = 80.3 + 2*l1
+    corr = m.tan(m.radians(pid_roll.compute(0, roll_angle_deg)))
+    dz = x/2 * corr
+    posFR[2] += dz; posRR[2] += dz
+    RIGHT_Inverse_Kinematics(Front, 0, -l1, posFR[2])
+    RIGHT_Inverse_Kinematics(Rear, 0, -l1, posRR[2])
+    posFL[2] -= dz; posRL[2] -= dz
+    LEFT_Inverse_Kinematics(Front, 0,  l1, posFL[2])
+    LEFT_Inverse_Kinematics(Rear, 0,  l1, posRL[2])
+
+def imu_loop(dt=0.02):
+    """Chạy trong thread riêng hoặc gọi trong main loop."""
+    roll, pitch = get_RP_Angle()
+    print("Roll=%.1f Pitch=%.1f" % (roll, pitch))
+    self_balancing_pitch(pitch)
+    self_balancing_roll(roll)
+    time.sleep(dt)
+
+def initial_position():
+    LEFT_Inverse_Kinematics (Front, 0,  l1, RH)
+    RIGHT_Inverse_Kinematics(Front, 0, -l1, RH)
+    LEFT_Inverse_Kinematics (Rear, 0,  l1, RH)
+    RIGHT_Inverse_Kinematics(Rear, 0, -l1, RH)
+    time.sleep(1.0)
+
+# ==== Demo TURN tối giản: dùng input góc ====
+def Turn(angle_deg):
+    # Giữ nguyên thuật toán gốc của anh (rút gọn trình bày).
+    # ... (anh có thể giữ code Turn cũ, không đổi)
+    pass
+
+# ================== MAIN ==================
+if __name__ == "__main__":
+    initial_position()
+
+    # Ví dụ: vòng lặp chính 50Hz và đọc góc quay từ bàn phím
+    # (anh bật/đổi theo nhu cầu)
+    while True:
+        # Cập nhật cân bằng IMU (nếu có)
+        imu_loop(0.02)
+
+        # Đọc lệnh quay
+        try:
+            angle_input = input("Nhap goc (Enter bỏ qua): ").strip()
+            if angle_input:
+                ang = float(angle_input)
+                Turn(ang)
+        except Exception as e:
+            print("Input error:", e)
